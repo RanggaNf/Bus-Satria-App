@@ -25,27 +25,16 @@ Bus Satria App adalah platform aplikasi mobile yang dirancang untuk meningkatkan
 
 | | | |
 |:-------------------------:|:-------------------------:|:-------------------------:|
-|<img width="250" alt="Splash Screen" src="![image](https://github.com/user-attachments/assets/1c8b5492-a707-41a1-bfcb-994241575cc5)
-">|<img width="250" alt="Login Screen" src="![image](https://github.com/user-attachments/assets/c000f751-bdca-4544-9684-324591fdc5cf)
-">|<img width="250" alt="Home Screen" src="![image](https://github.com/user-attachments/assets/38866fcb-e149-4859-b701-bffcc3ec3ff0)
-">|
-|<img width="250" alt="Map View" src="![image](https://github.com/user-attachments/assets/6b164d36-bf71-4244-8eec-3aee4d3fd2d6)
-">|<img width="250" alt="Bus Schedule" src="![image](https://github.com/user-attachments/assets/abbb5a98-4fbf-4ab6-9ba6-890351c676c2)
-">|<img width="250" alt="Notifications" src="![image](https://github.com/user-attachments/assets/d5392684-7c62-4e56-9b49-9b7870bcc59c)
-">|
+|<img width="250" alt="Splash Screen" src="https://github.com/user-attachments/assets/1c8b5492-a707-41a1-bfcb-994241575cc5">|<img width="250" alt="Login Screen" src="https://github.com/user-attachments/assets/c000f751-bdca-4544-9684-324591fdc5cf">|<img width="250" alt="Home Screen" src="https://github.com/user-attachments/assets/38866fcb-e149-4859-b701-bffcc3ec3ff0">|
+|<img width="250" alt="Map View" src="https://github.com/user-attachments/assets/6b164d36-bf71-4244-8eec-3aee4d3fd2d6">|<img width="250" alt="Bus Schedule" src="https://github.com/user-attachments/assets/abbb5a98-4fbf-4ab6-9ba6-890351c676c2">|<img width="250" alt="Notifications" src="https://github.com/user-attachments/assets/d5392684-7c62-4e56-9b49-9b7870bcc59c">|
 
 ### Aplikasi Pengemudi
 
 | | | |
 |:-------------------------:|:-------------------------:|:-------------------------:|
-|<img width="250" alt="Driver Login" src="![image](https://github.com/user-attachments/assets/bd4d4064-fc81-45e0-998b-02eddcb49697)
-">|<img width="250" alt="Driver Map" src="![image](https://github.com/user-attachments/assets/df1caf4b-e031-4707-a54f-abbac6918dff)
-">|<img width="250" alt="Passenger Count" src="![image](https://github.com/user-attachments/assets/a04795ae-286d-4cb3-a768-9da896e433cf)
-">|
-|<img width="250" alt="Route Overview" src="![image](https://github.com/user-attachments/assets/9deae959-106d-420b-ad47-2c70b58e184b)
-">|<img width="250" alt="Driver Notifications" src="![image](https://github.com/user-attachments/assets/3d7aa0d6-98f5-468e-b37a-1c8f46de15ff)
-">|<img width="250" alt="Driver Settings" src="![image](https://github.com/user-attachments/assets/bfad4350-c44b-4d14-b9ef-45c25a67dd8a)
-">|
+|<img width="250" alt="Driver Login" src="https://github.com/user-attachments/assets/bd4d4064-fc81-45e0-998b-02eddcb49697">|<img width="250" alt="Driver Map" src="https://github.com/user-attachments/assets/df1caf4b-e031-4707-a54f-abbac6918dff">|<img width="250" alt="Passenger Count" src="https://github.com/user-attachments/assets/a04795ae-286d-4cb3-a768-9da896e433cf">|
+|<img width="250" alt="Route Overview" src="https://github.com/user-attachments/assets/9deae959-106d-420b-ad47-2c70b58e184b">|<img width="250" alt="Driver Notifications" src="https://github.com/user-attachments/assets/3d7aa0d6-98f5-468e-b37a-1c8f46de15ff">|<img width="250" alt="Driver Settings" src="https://github.com/user-attachments/assets/bfad4350-c44b-4d14-b9ef-45c25a67dd8a">|
+
 
 ## Instalasi
 
