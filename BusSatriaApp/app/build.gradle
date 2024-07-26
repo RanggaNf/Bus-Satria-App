@@ -1,0 +1,147 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+    id 'kotlin-kapt'
+    id 'com.google.dagger.hilt.android'
+}
+
+android {
+    namespace 'com.bussatriaapp'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.bussatriaapp"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.1'
+    }
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+
+    // Kotlin Coroutines
+    implementation libs.kotlinx.coroutines.core
+
+    // AndroidX Core
+    implementation libs.androidx.core.ktx
+
+    // AndroidX Lifecycle
+    implementation libs.androidx.lifecycle.runtime.ktx
+
+    // AndroidX Activity Compose
+    implementation libs.androidx.activity.compose
+    implementation libs.firebase.database
+    implementation libs.firebase.auth
+    implementation libs.firebase.firestore.ktx
+    implementation libs.play.services.location
+    implementation libs.firebase.storage.ktx
+    debugImplementation libs.ui.tooling
+    implementation platform(libs.firebase.bom)
+    implementation libs.firebase.analytics.ktx
+    implementation libs.firebase.firestore.ktx.v2400
+
+    // AndroidX Navigation Compose
+    implementation libs.androidx.navigation.compose
+
+    // Compose UI
+    implementation platform(libs.androidx.compose.bom.v20240600)
+    implementation libs.ui
+    implementation libs.ui.graphics
+    implementation libs.ui.tooling.preview
+
+    // Compose Material3
+    implementation libs.material3
+
+    // Compose Material
+    implementation libs.androidx.material
+    implementation libs.androidx.material.icons.extended
+
+    // Accompanist Library
+    implementation libs.accompanist.pager.indicators
+    implementation libs.accompanist.pager
+
+    // Constraint Layout Compose
+    implementation libs.androidx.constraintlayout.compose
+
+    // Compose Foundation
+    implementation libs.androidx.foundation
+    implementation libs.androidx.foundation.android
+    implementation libs.androidx.ui.text
+
+    // Compose Animation
+    implementation libs.androidx.animation
+    implementation libs.androidx.animation.core
+    implementation libs.androidx.animation.graphics
+
+    // Fragment & ViewModel Compose
+    implementation libs.androidx.fragment.compose
+    implementation libs.androidx.lifecycle.viewmodel.compose
+    implementation libs.androidx.lifecycle.runtime.ktx.v240
+
+    // Testing
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+
+    implementation libs.accompanist.systemuicontroller
+
+    implementation libs.androidx.navigation.compose
+    implementation libs.hilt.android
+    implementation libs.androidx.hilt.navigation.compose
+    kapt libs.hilt.android.compiler
+    implementation libs.kotlinx.coroutines.android
+    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.runtime.rxjava2)
+
+    //Retrofit
+    implementation libs.retrofit
+    implementation libs.converter.gson
+    implementation libs.adapter.rxjava2
+
+    //Maps
+    implementation libs.maps.compose
+    implementation libs.play.services.maps
+    implementation libs.android.maps.utils
+    implementation libs.accompanist.systemuicontroller.v0280
+    implementation libs.coil.compose
+
+    implementation libs.androidx.material.icons.extended.vversion
+    implementation libs.maps.utils.ktx
+    implementation libs.play.services.maps.v1802
+    implementation(libs.coil.compose.v132)
+    implementation libs.accompanist.permissions
+
+}

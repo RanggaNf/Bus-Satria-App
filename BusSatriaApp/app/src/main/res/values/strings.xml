@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SATRIA</string>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyDsek06Wxw7mILVc_ByKx6k2pveg4GID84</string>
+</resources>

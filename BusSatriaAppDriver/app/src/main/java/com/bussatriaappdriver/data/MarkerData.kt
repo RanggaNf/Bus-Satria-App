@@ -1,0 +1,43 @@
+package com.bussatriaappdriver.data
+
+import com.google.android.gms.maps.model.LatLng
+
+val markerPositions = listOf(
+    LatLng(-7.828927, 111.984723) to "Terminal Tamanan",
+    LatLng(-7.826962, 111.985334) to "Halte 1 Campurejo",
+    LatLng(-7.816601, 111.989229) to "Halte 2 RSU Lirboyo",
+    LatLng(-7.811357, 111.992123) to "Halte 3 Kelurahan Sukorame",
+    LatLng(-7.811231, 111.997882) to "Halte 4 RSU Daha Husada",
+    LatLng(-7.808582, 112.001907) to "Halte 5 Mojoroto Indah",
+    LatLng(-7.803459, 112.003461) to "Halte 6 Aliston",
+    LatLng(-7.809858, 112.004694) to "Halte 7 Panti Sosial",
+    LatLng(-7.812709, 112.006032) to "Halte 8 Taman Harmoni",
+    LatLng(-7.810890, 112.009587) to "Halte Exiting 1 Post Indonesia",
+    LatLng(-7.811398, 112.013100) to "Halte Exiting 2 SMPN 1 Kediri",
+    LatLng(-7.811703, 112.015352) to "Halte Exiting 3 Auto 2000",
+    LatLng(-7.812180, 112.018664) to "Halte Exiting 4 Polsek Kota",
+    LatLng(-7.813764, 112.020255) to "Halte 9 Apotek Pemuda",
+    LatLng(-7.817000, 112.019615) to "Halte 10 Hotel Citihub",
+    LatLng(-7.820704, 112.018941) to "Halte 11 SMPN 3 Kediri",
+    LatLng(-7.822778, 112.021124) to "Halte 12 Pasar Pahing",
+    LatLng(-7.824192, 112.026714) to "Halte 13 Ponpes LDII",
+    LatLng(-7.819645, 112.028570) to "Halte 14 MAN 2 Kediri",
+    LatLng(-7.817502, 112.026700) to "Halte Exiting 5 Sdn Banjaran",
+    LatLng(-7.815867, 112.021220) to "Halte 15 Bank Mega Kediri",
+    LatLng(-7.815528, 112.019077) to "Halte 16 Kediri Mall",
+    LatLng(-7.814762, 112.015641) to "Halte 17 Maybank Kediri",
+    LatLng(-7.816879, 112.013296) to "Halte 18 Jl Dhoho Stasiun Kediri",
+    LatLng(-7.821571, 112.016175) to "Halte 19 Pasar Setono Betek",
+    LatLng(-7.822774, 112.018482) to "Halte 20 Ruko Kilissuci",
+    LatLng(-7.825765, 112.017918) to "Halte 21 Percetakan Dallas",
+    LatLng(-7.828845, 112.015761) to "Halte 22 Pertigaan Sunan Geseng",
+    LatLng(-7.827986, 112.011153) to "Halte 23 BTPN Alun Alun",
+    LatLng(-7.827151, 112.006344) to "Halte 24 Bandar Ngalim",
+    LatLng(-7.824767, 112.005786) to "Halte 25 Pizza Hud Wahid Hasyim",
+    LatLng(-7.817664, 112.005668) to "Halte 26 RSUD Kilisuci",
+    LatLng(-7.812208, 112.005040) to "Halte 27 GBIP Imanuel Kediri",
+    LatLng(-7.8111524,112.0031897) to "Halte 28 SMAN 1 Kediri",
+    LatLng(-7.8145007,112.0003987) to "Halte Exiting 6 Disperdagin Penanggungan",
+    LatLng(-7.8177133,111.9994672) to "Halte 29 Udinus",
+    LatLng(-7.8278130,111.9942444) to "Halte 30 SDN Lirboyo"
+)
