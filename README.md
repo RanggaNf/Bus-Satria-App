@@ -1,8 +1,5 @@
 # Bus Satria App
 
-![image](https://github.com/user-attachments/assets/61991c9f-8af3-4bde-92b0-67fd817ae0b4)
-
-
 Bus Satria App adalah platform aplikasi mobile yang dirancang untuk meningkatkan efisiensi dan kenyamanan layanan bus SATRIA (Sarana Transportasi Kediri Bahagia) bagi para pelajar di Kota Kediri. Aplikasi ini menyediakan informasi real-time tentang posisi bus, estimasi waktu kedatangan, dan memungkinkan pengemudi untuk melihat jumlah penumpang yang menunggu di setiap halte.
 
 ## Fitur Utama
