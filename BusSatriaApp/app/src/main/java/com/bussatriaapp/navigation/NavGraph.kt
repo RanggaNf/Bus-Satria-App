@@ -2,7 +2,6 @@ package com.bussatriaapp.navigation
 
 
 object Destination {
-    const val SplashScreen = "SplashScreen"
     const val StartScreen = "StartScreen"
     const val LoginScreen = "LoginScreen"
     const val LoginScreenDriver ="LoginScreenDriver"
@@ -15,4 +14,7 @@ object Destination {
     const val HomeScreen = "HomeScreen"
     const val ScheduleScreen = "ScheduleScreen"
     const val ChatScreen = "ChatScreen"
+    const val EditProfileScreen = "EditProfileScreen"
+    const val SettingsScreen = "SettingsScreen"
+    const val SplashScreen = "splash_screen"
 }

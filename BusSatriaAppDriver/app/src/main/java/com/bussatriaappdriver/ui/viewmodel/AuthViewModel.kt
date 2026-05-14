@@ -22,7 +22,6 @@ class AuthViewModel @Inject constructor(
     private val _driverAuthState = MutableStateFlow<Result<Unit>?>(null)
     val driverAuthState: StateFlow<Result<Unit>?> = _driverAuthState
 
-
     fun loginDriver(passcode: String, context: Context) {
         viewModelScope.launch {
             val result = driverRepository.verifyDriverPasscode(passcode, context)

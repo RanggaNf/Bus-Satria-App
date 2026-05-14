@@ -32,42 +32,82 @@ import kotlinx.coroutines.delay
 import com.bussatriaapp.ui.theme.BusSatriaAppTheme
 
 
+import android.content.res.Configuration
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+
 @Composable
-fun SplashScreen(navController: NavHostController) {
-    val isVisible = remember { mutableStateOf(true) }
+fun AnimatedLoadingScreen() {
+    val isDarkTheme = isSystemInDarkTheme()
+    val backgroundColor = if (isDarkTheme) Color.Black else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
-    LaunchedEffect(Unit) {
-        delay(3000) // Tunda selama 3 detik sebelum menavigasi
-        isVisible.value = false
-        navController.navigate(Destination.StartScreen) {
-            popUpTo(Destination.SplashScreen) { inclusive = true }
-        }
-    }
+    val infiniteTransition = rememberInfiniteTransition()
 
-    AnimatedVisibility(visible = isVisible.value) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF800080)), // Warna ungu
-            contentAlignment = Alignment.Center
+    // Pulse animation for logo size
+    val logoScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Opacity animation for loading text
+    val loadingTextAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.busmerah),
-                    contentDescription = "Logo Bus Merah",
-                    modifier = Modifier.size(100.dp)
-                )
-                Text(
-                    text = "SATRIA",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
+            Image(
+                painter = painterResource(id = R.drawable.logokediri),
+                contentDescription = "Logo Kediri",
+                modifier = Modifier
+                    .size(100.dp)
+                    .scale(logoScale)
+                    .graphicsLayer(
+                        alpha = 0.99f // Enable layer for smooth scaling
+                    )
+            )
+            Text(
+                text = "SATRIA",
+                color = textColor,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+            Text(
+                text = "Loading...",
+                color = textColor.copy(alpha = loadingTextAlpha),
+                fontSize = 16.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

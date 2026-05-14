@@ -2,8 +2,10 @@ package com.bussatriaappdriver.data.repository
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.Location
 import android.os.Looper
 import android.util.Log
+import com.bussatriaappdriver.data.markerPositions
 import com.bussatriaappdriver.utils.PreferenceUtil
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -53,6 +55,19 @@ class LocationDriverRepository @Inject constructor(
             locationCallbackWrapper!!.callback, // Ensure non-null callback is passed here
             Looper.getMainLooper()
         )
+    }
+    fun findNearestHalte(currentLocation: LatLng): Pair<String, LatLng> {
+        return markerPositions.minByOrNull { (position, _) ->
+            calculateDistance(currentLocation, position)
+        }?.let { (position, name) ->
+            name to position
+        } ?: ("Unknown" to LatLng(0.0, 0.0))
+    }
+
+    private fun calculateDistance(loc1: LatLng, loc2: LatLng): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(loc1.latitude, loc1.longitude, loc2.latitude, loc2.longitude, results)
+        return results[0]
     }
 
     fun stopSendingLocationToFirebase() {

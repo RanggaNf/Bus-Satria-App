@@ -1,6 +1,7 @@
 package com.bussatriaapp.component
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,6 +28,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
@@ -46,16 +51,23 @@ import com.bussatriaapp.navigation.Destination
 import com.bussatriaapp.ui.theme.BusSatriaAppTheme
 import com.bussatriaapp.ui.theme.gray
 import com.bussatriaapp.ui.theme.onSurface
-
+import com.bussatriaapp.ui.viewmodel.AuthViewModel
 @Composable
-fun CustomTopBar(navController: NavHostController, isHomeScreen: Boolean = false, isDepartScreen: Boolean = false) {
+fun CustomTopBar(
+    navController: NavHostController,
+    isHomeScreen: Boolean = false,
+    isDepartScreen: Boolean = false,
+    viewModel: AuthViewModel = hiltViewModel()
+) {
     val isDarkTheme = isSystemInDarkTheme()
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFF8F8F8)
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val context = LocalContext.current
+    val userData by viewModel.userData.collectAsState()
 
-    // State to store the typed text
-    val searchText = remember { mutableStateOf("") }
+    LaunchedEffect(userData) {
+        Log.d("CustomTopBar", "UserData: $userData")
+    }
 
     TopAppBar(
         backgroundColor = backgroundColor,
@@ -74,7 +86,11 @@ fun CustomTopBar(navController: NavHostController, isHomeScreen: Boolean = false
             when {
                 isHomeScreen -> {
                     Text(
-                        text = "Hallo SATRIA",
+                        text = "Hallo ${
+                            userData?.let {
+                                it["name"] as? String
+                            } ?: "Pengguna"
+                        }",
                         color = textColor,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
@@ -95,30 +111,14 @@ fun CustomTopBar(navController: NavHostController, isHomeScreen: Boolean = false
                     )
                 }
                 else -> {
-                    TextField(
-                        value = searchText.value,
-                        onValueChange = { searchText.value = it },
-                        placeholder = { Text(text = "Telusuri di sini", color = textColor) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                                tint = textColor
-                            )
-                        },
+                    Text(
+                        text = "Jelajahi Rute",
+                        color = textColor,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .weight(1f)
-                            .background(
-                                color = if (isDarkTheme) Color(0xFF262626) else Color(0xFFF2F2F2),
-                                shape = RoundedCornerShape(80.dp)
-                            )
-                            .padding(end = 16.dp),
-                        colors = TextFieldDefaults.textFieldColors(
-                            textColor = textColor,
-                            backgroundColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        )
+                            .padding(end = 16.dp)
                     )
                 }
             }

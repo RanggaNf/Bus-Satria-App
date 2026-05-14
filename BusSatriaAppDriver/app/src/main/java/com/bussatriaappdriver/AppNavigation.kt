@@ -3,6 +3,7 @@ package com.bussatriaappdriver
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.bussatriaappdriver.navigation.Destination
 import com.bussatriaappdriver.navigation.Destination.LoginScreenDriver
@@ -43,6 +45,8 @@ import com.bussatriaappdriver.ui.screens.DepartScreenDriver
 import com.bussatriaappdriver.ui.screens.HomeScreen
 import com.bussatriaappdriver.ui.screens.ProfileScreenDriver
 import com.bussatriaappdriver.ui.screens.ScheduleScreen
+import com.bussatriaappdriver.ui.screens.SettingsScreen
+import com.bussatriaappdriver.ui.viewmodel.ChatViewModel
 
 @Composable
 fun SatriaNavigationDriver() {
@@ -67,7 +71,9 @@ fun SatriaNavigationDriver() {
                 Destination.LoginScreenDriver,
                 Destination.ProfileScreenDriver,
                 Destination.ScheduleScreen,
-                Destination.InfoScreen-> false
+                Destination.InfoScreen,
+                Destination.ChatScreen,
+                Destination.SettingsScreen-> false
                 else -> true
             }
             shouldShowBottomBar.value = shouldShowBars
@@ -137,6 +143,19 @@ fun SatriaNavigationDriver() {
                 }
                 composable(Destination.DepartDriverScreen) {
                     DepartScreenDriver(navController = navController)
+                }
+                composable(Destination.ChatScreen) {
+                    val chatViewModel: ChatViewModel = hiltViewModel()
+                    ChatScreen(
+                        viewModel = chatViewModel,
+                        navController = navController)
+                }
+                composable(Destination.SettingsScreen) {
+                    SettingsScreen(
+                        viewModel = hiltViewModel(),  // Assuming you have SettingsViewModel injected
+                        modifier = Modifier.fillMaxSize(),
+                        navController = navController
+                    )
                 }
             }
         }

@@ -16,46 +16,41 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
-
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 class LocationRepository @Inject constructor(
     private val fusedLocationClient: FusedLocationProviderClient,
-    private val firebaseDatabase: FirebaseDatabase
+    private val firestore: FirebaseFirestore
 ) {
     @SuppressLint("MissingPermission")
-    fun startLocationUpdates(context: Context, onLocationUpdate: (LatLng) -> Unit) {
-        val locationRequest = LocationRequest.create().apply {
-            interval = 5000 // Update setiap 5 detik
-            fastestInterval = 2000
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            maxWaitTime = 1000 // Maksimal menunggu 1 detik
+    suspend fun getAndSendCurrentLocation(): Result<LatLng> {
+        return try {
+            val location = fusedLocationClient.lastLocation.await()
+            location?.let {
+                val latLng = LatLng(it.latitude, it.longitude)
+                sendLocationToFirestore(latLng)
+                Result.success(latLng)
+            } ?: Result.failure(Exception("Location not available"))
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                locationResult.lastLocation?.let { location ->
-                    val latLng = LatLng(location.latitude, location.longitude)
-                    onLocationUpdate(latLng)
-                }
-            }
-        }
-
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
     }
 
-    fun sendLocationToFirebase(latLng: LatLng) {
+    private suspend fun sendLocationToFirestore(latLng: LatLng) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown"
-        val locationRef = firebaseDatabase.getReference("locations").child(userId)
+        val locationData = hashMapOf(
+            "latitude" to latLng.latitude,
+            "longitude" to latLng.longitude,
+            "timestamp" to com.google.firebase.Timestamp.now()
+        )
 
-        locationRef.setValue(latLng)
-            .addOnSuccessListener {
-                Log.d("LocationRepository", "Location sent to Firebase successfully: $latLng")
-            }
-            .addOnFailureListener { exception ->
-                Log.d("LocationRepository", "Failed to send location to Firebase: ${exception.message}")
-            }
+        try {
+            firestore.collection("passenger_locations").document(userId)
+                .set(locationData)
+                .await()
+            Log.d("LocationRepository", "Location sent to Firestore successfully: $latLng")
+        } catch (e: Exception) {
+            Log.e("LocationRepository", "Failed to send location to Firestore", e)
+        }
     }
 }

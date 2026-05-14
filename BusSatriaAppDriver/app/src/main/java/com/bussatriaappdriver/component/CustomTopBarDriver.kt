@@ -96,30 +96,14 @@ fun CustomTopBarDriver(navController: NavHostController, isHomeScreen: Boolean =
                     )
                 }
                 else -> {
-                    TextField(
-                        value = searchText.value,
-                        onValueChange = { searchText.value = it },
-                        placeholder = { Text(text = "Telusuri di sini", color = textColor) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                                tint = textColor
-                            )
-                        },
+                    Text(
+                        text = "Jelajahi Rute",
+                        color = textColor,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .weight(1f)
-                            .background(
-                                color = if (isDarkTheme) Color(0xFF262626) else Color(0xFFF2F2F2),
-                                shape = RoundedCornerShape(80.dp)
-                            )
-                            .padding(end = 16.dp),
-                        colors = TextFieldDefaults.textFieldColors(
-                            textColor = textColor,
-                            backgroundColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        )
+                            .padding(end = 16.dp)
                     )
                 }
             }

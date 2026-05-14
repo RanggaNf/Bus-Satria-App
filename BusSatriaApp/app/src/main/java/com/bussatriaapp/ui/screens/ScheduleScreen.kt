@@ -55,7 +55,7 @@ fun ScheduleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Schedule", color = textColor) },
+                title = { Text(text = "Jadwal", color = textColor) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -77,6 +77,7 @@ fun ScheduleScreen(
                     .background(backgroundColor)
                     .fillMaxSize()
                     .padding(it)
+                    .navigationBarsPadding()
             ) {
                 LazyColumn(
                     modifier = Modifier

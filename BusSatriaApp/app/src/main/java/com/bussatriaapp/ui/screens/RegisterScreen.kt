@@ -75,6 +75,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Work
+import com.bussatriaapp.data.AuthState
 import com.bussatriaapp.ui.theme.transparantColor
 
 
@@ -109,6 +110,7 @@ fun RegisterScreen(
     var expanded by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf("Pelajar") }
     val roleOptions = listOf("Pelajar", "Mahasiswa", "Pekerja", "Umum")
+
 
     LaunchedEffect(key1 = true) {
         systemUiController.setSystemBarsColor(
@@ -353,7 +355,7 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     isLoading = true
-                    viewModel.register(email, password)
+                    viewModel.register(email, password, name, selectedRole)
                 },
                 modifier = Modifier
                     .padding(bottom = 25.dp, start = 20.dp, end = 20.dp)
@@ -384,14 +386,30 @@ fun RegisterScreen(
         }
     }
 
-    authState?.let {
-        isLoading = false
-        if (it.isSuccess) {
+    when (authState) {
+        is AuthState.Authenticated -> {
+            isLoading = false
+            Toast.makeText(context, "Registrasi berhasil, silakan login", Toast.LENGTH_SHORT).show()
             navController.navigate(Destination.LoginScreen) {
                 popUpTo(Destination.RegisterScreen) { inclusive = true }
             }
-        } else {
-            Toast.makeText(context, it.exceptionOrNull()?.message ?: "Unknown error", Toast.LENGTH_SHORT).show()
+        }
+        is AuthState.Unauthenticated -> {
+            isLoading = false
+            val errorMessage = when (authState) {
+                else -> "Terjadi kesalahan, coba lagi"
+            }
+            if (errorMessage.contains("The email address is already in use")) {
+                Toast.makeText(context, "Email sudah digunakan, silakan login", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+            }
+        }
+        is AuthState.Loading -> {
+            isLoading = true
+        }
+        is AuthState.Initial -> {
+            // Do nothing or handle initial state if needed
         }
     }
 }

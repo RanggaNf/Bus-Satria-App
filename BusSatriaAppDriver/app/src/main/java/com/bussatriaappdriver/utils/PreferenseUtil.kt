@@ -37,4 +37,11 @@ object PreferenceUtil {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         return prefs.getBoolean(KEY_IS_DRIVER, false)
     }
+    fun clearDriverPasscode(context: Context) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        with(prefs.edit()) {
+            remove(KEY_DRIVER_PASSCODE)
+            apply()
+        }
+    }
 }

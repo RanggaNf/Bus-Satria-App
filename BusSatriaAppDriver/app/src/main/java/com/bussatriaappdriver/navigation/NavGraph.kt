@@ -17,4 +17,5 @@ object Destination {
     const val ProfileScreenDriver = "ProfileScreenDriver"
     const val HomeScreen = "HomeScreen"
     const val ScheduleScreen = "ScheduleScreen"
+    const val SettingsScreen = "SettingsScreen"
 }

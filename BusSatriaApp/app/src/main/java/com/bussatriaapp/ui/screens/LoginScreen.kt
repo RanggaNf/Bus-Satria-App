@@ -1,6 +1,10 @@
 package com.bussatriaapp.ui.screens
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -49,11 +53,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
+import androidx.core.app.NotificationCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bussatriaapp.animate.bounceClick
 import com.bussatriaapp.animate.pressClickEffect
 import com.bussatriaapp.component.CustomStyleTextField
 import com.bussatriaapp.component.isValidPassword
+import com.bussatriaapp.data.AuthState
 import com.bussatriaapp.navigation.Destination
 import com.bussatriaapp.ui.theme.DarkPrimaryPurple
 import com.bussatriaapp.ui.theme.LightPrimaryPurple
@@ -200,10 +206,12 @@ fun LoginScreen(
                         value = password,
                         onValueChange = { password = it },
                         textColor = textColor,
-                        backgroundColor = transparantColor,
+                        backgroundColor = Color.Transparent,
                         borderColor = borderColor,
                         errorColor = Color.Red,
-                        errorMessage = if (password.isNotEmpty() && !isValidPassword(password)) "Password must contain at least 6 characters, including at least one letter and one number" else null
+                        errorMessage = if (password.isNotEmpty() && !isValidPassword(password)) "Password must contain at least 6 characters, including at least one letter and one number" else null,
+                        showTrailingIcon = true,
+                        onTrailingIconClick = { isPasswordVisible = !isPasswordVisible }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -267,18 +275,55 @@ fun LoginScreen(
         }
     }
 
-    authState?.let {
-        isLoading = false // Atur isLoading menjadi false setelah proses autentikasi selesai atau terjadi kesalahan
-        if (it.isSuccess) {
+    when (authState) {
+        is AuthState.Authenticated -> {
+            isLoading = false
+            // Menampilkan toast "Selamat datang Satria"
+            Toast.makeText(context, "Selamat datang Satria", Toast.LENGTH_SHORT).show()
+
+            // Menampilkan notifikasi "Selamat datang di aplikasi Satria"
+            createWelcomeNotification(context)
+
             navController.navigate(Destination.HomeScreen) {
                 popUpTo(Destination.LoginScreen) { inclusive = true }
             }
-        } else {
-            Toast.makeText(context, it.exceptionOrNull()?.message ?: "Unknown error", Toast.LENGTH_SHORT).show()
+        }
+        is AuthState.Unauthenticated -> {
+            isLoading = false
+            Toast.makeText(context, "Email dan Password salah", Toast.LENGTH_SHORT).show()
+        }
+        is AuthState.Loading -> {
+            isLoading = true
+        }
+        is AuthState.Initial -> {
+            // Do nothing or handle initial state if needed
         }
     }
 }
 
+private fun createWelcomeNotification(context: Context) {
+    val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    val channelId = "satria_welcome_channel"
+    val channelName = "Satria Welcome Channel"
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val channel = NotificationChannel(
+            channelId,
+            channelName,
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    val notificationBuilder = NotificationCompat.Builder(context, channelId)
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // Ganti dengan ikon aplikasi
+        .setContentTitle("Selamat datang")
+        .setContentText("Selamat datang di aplikasi Satria")
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+    notificationManager.notify(1, notificationBuilder.build())
+}
 
 @Preview(name = "Light Mode", uiMode = Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)

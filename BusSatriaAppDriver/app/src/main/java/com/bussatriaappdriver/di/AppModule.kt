@@ -2,12 +2,16 @@ package com.bussatriaappdriver.di
 
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.bussatriaappdriver.data.repository.BusLocationRepository
 import com.bussatriaappdriver.data.repository.ChatRepository
 import com.bussatriaappdriver.data.repository.LocationRepository
+import com.bussatriaappdriver.data.repository.SettingsRepository
+import com.bussatriaappdriver.data.repository.SettingsRepositoryImpl
 import com.bussatriaappdriver.ui.viewmodel.BusLocationViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
@@ -17,6 +21,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
@@ -59,12 +66,28 @@ object AppModule {
     ): LocationRepository {
         return LocationRepository(fusedLocationClient, firebaseDatabase)
     }
+
     @Provides
     @Singleton
-    fun provideGroupChatRepository(
-        firestore: FirebaseFirestore,
-        storage: FirebaseStorage
-    ): ChatRepository {
-        return ChatRepository(firestore, storage)
+    fun provideFirebaseStorage(): FirebaseStorage = FirebaseStorage.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
     }
+
+    @Provides
+    @Singleton
+    fun provideContext(@ApplicationContext context: Context): Context {
+        return context
+    }
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(
+        @ApplicationContext context: Context
+    ): SettingsRepository {
+        return SettingsRepositoryImpl(context)
+    }
+
 }

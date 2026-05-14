@@ -85,6 +85,7 @@ fun InfoScreen(
                     .background(backgroundColor)
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .navigationBarsPadding()
             ) {
                 LazyColumn(
                     modifier = Modifier

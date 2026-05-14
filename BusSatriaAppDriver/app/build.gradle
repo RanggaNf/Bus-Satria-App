@@ -144,5 +144,9 @@ dependencies {
     implementation libs.androidx.foundation.v143
     implementation libs.androidx.foundation.layout
     implementation libs.coil.compose.v210
+    implementation libs.accompanist.permissions
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+    implementation "androidx.work:work-runtime-ktx:2.7.1"
+
 
 }

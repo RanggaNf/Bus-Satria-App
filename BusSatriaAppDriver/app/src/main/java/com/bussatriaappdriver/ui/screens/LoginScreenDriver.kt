@@ -124,88 +124,94 @@ fun DriverLoginScreen(
                 )
         )
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 22.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            Spacer(modifier = Modifier.height(500.dp))
-            Text(
-                text = "Driver Login",
-                color = textColor,
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 40.sp
-                )
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Login Untuk Driver",
-                color = textColor,
-                style = TextStyle(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp
-                )
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Masukan Kode Unik",
-                color = textColor,
-                style = TextStyle(
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp
-                )
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            CustomStyleTextField(
-                placeHolder = "Kode Unik",
-                leadingIcon = Icons.Default.Lock,
-                trailingIcon = if (isPasscodeVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                keyboardType = KeyboardType.Password,
-                visualTransformation = if (isPasscodeVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                value = passcode,
-                onValueChange = { passcode = it },
-                textColor = textColor,
-                backgroundColor = transparantColor,
-                borderColor = borderColor,
-                errorColor = Color.Red,
-                errorMessage = if (passcode.isNotEmpty() && passcode.length < 6) "Passcode harus terdiri dari minimal 6 karakter" else null,
-                showTrailingIcon = true,
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = {
-                    isLoading = true
-                    viewModel.loginDriver(passcode, context)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .pressClickEffect(),
-                colors = ButtonDefaults.buttonColors(backgroundColor = buttonColor),
-                shape = RoundedCornerShape(percent = 20),
-                elevation = ButtonDefaults.elevation(
-                    defaultElevation = 0.dp,
-                    pressedElevation = 4.dp
-                ),
-                contentPadding = PaddingValues(8.dp)
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(color = backgroundColor)
-                } else {
-                    Text(
-                        text = "Login",
-                        color = backgroundColor,
-                        style = TextStyle(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp
-                        )
+            item { Spacer(modifier = Modifier.height(500.dp)) }
+            item {
+                Text(
+                    text = "Driver Login",
+                    color = textColor,
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 40.sp
                     )
+                )
+            }
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+            item {
+                Text(
+                    text = "Login Untuk Driver",
+                    color = textColor,
+                    style = TextStyle(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp
+                    )
+                )
+            }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+            item {
+                Text(
+                    text = "Masukan Kode Unik",
+                    color = textColor,
+                    style = TextStyle(
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp
+                    )
+                )
+            }
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+            item {
+                CustomStyleTextField(
+                    placeHolder = "Kode Unik",
+                    leadingIcon = Icons.Default.Lock,
+                    trailingIcon = if (isPasscodeVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                    keyboardType = KeyboardType.Password,
+                    visualTransformation = if (isPasscodeVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    value = passcode,
+                    onValueChange = { passcode = it },
+                    textColor = textColor,
+                    backgroundColor = transparantColor,
+                    borderColor = borderColor,
+                    errorColor = Color.Red,
+                    errorMessage = if (passcode.isNotEmpty() && passcode.length < 6) "Passcode harus terdiri dari minimal 6 karakter" else null,
+                    showTrailingIcon = true,
+                )
+            }
+            item { Spacer(modifier = Modifier.height(32.dp)) }
+            item {
+                Button(
+                    onClick = {
+                        isLoading = true
+                        viewModel.loginDriver(passcode, context)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .pressClickEffect(),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = buttonColor),
+                    shape = RoundedCornerShape(percent = 20),
+                    elevation = ButtonDefaults.elevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 4.dp
+                    ),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = backgroundColor)
+                    } else {
+                        Text(
+                            text = "Login",
+                            color = backgroundColor,
+                            style = TextStyle(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -223,7 +229,6 @@ fun DriverLoginScreen(
         }
     }
 }
-
 @Preview(name = "Light Mode", uiMode = Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable

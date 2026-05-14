@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -26,6 +27,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -45,15 +49,26 @@ class LocationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NOTIFICATION_ID, createNotification())
 
-        locationRepository.startLocationUpdates(this) { latLng ->
-            // Kirim lokasi ke Firebase
-            locationRepository.sendLocationToFirebase(latLng)
+        // Kirim lokasi sekali
+        CoroutineScope(Dispatchers.IO).launch {
+            locationRepository.getAndSendCurrentLocation()
+                .onSuccess { latLng ->
+                    Log.d("LocationService", "Location sent successfully: $latLng")
+                }
+                .onFailure { error ->
+                    Log.e("LocationService", "Failed to send location", error)
+                }
+            // Stop service setelah mengirim lokasi
+            stopSelf()
         }
 
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        // Tidak perlu memanggil stopSendingLocationToFirebase() karena kita tidak menggunakan pembaruan lokasi terus-menerus
+    }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -75,12 +90,13 @@ class LocationService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Location Tracking")
-            .setContentText("Tracking your location...")
-            .setSmallIcon(R.drawable.baseline_add_location_alt_24)
+            .setContentTitle("Location Sending")
+            .setContentText("Sending your current location...")
+            .setSmallIcon(R.drawable.busungu)
             .setContentIntent(pendingIntent)
             .build()
     }
+
 
     override fun onBind(intent: Intent?): IBinder? = null
 }

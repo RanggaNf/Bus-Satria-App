@@ -21,7 +21,6 @@ import javax.inject.Inject
 class LocationViewModel @Inject constructor(
     private val context: Application
 ) : ViewModel() {
-
     private val _isTracking = MutableStateFlow(false)
     val isTracking: StateFlow<Boolean> = _isTracking
 

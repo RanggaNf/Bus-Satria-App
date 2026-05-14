@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -47,17 +48,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.bussatriaappdriver.ui.theme.gray
 import com.bussatriaappdriver.ui.theme.green
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
@@ -79,14 +88,17 @@ fun DepartScreenDriver(
 
     val locationDriverViewModel: LocationDriverViewModel = hiltViewModel()
     val isTracking by locationDriverViewModel.isTracking.collectAsState()
-
-    var currentLocation by remember { mutableStateOf<LatLng?>(null) }
-    var nearestStop by remember { mutableStateOf<Pair<LatLng, String>?>(null) }
-    var nextStop by remember { mutableStateOf(Triple("Halte 1 Campurejo", 12, 0.5)) }
-
+    val currentHalte by locationDriverViewModel.currentHalte.collectAsState()
     val context = LocalContext.current
-    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
     val activity = context as? ComponentActivity
+    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    val nearestHalte by locationDriverViewModel.nearestHalte.collectAsState()
+
+
+    LaunchedEffect(Unit) {
+        locationDriverViewModel.checkServiceRunning()
+        locationDriverViewModel.loadHalteList()
+    }
 
     LaunchedEffect(key1 = true) {
         systemUiController.setSystemBarsColor(
@@ -104,7 +116,7 @@ fun DepartScreenDriver(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
                 TutorialSlider(indicatorColor = textColor)
@@ -113,54 +125,158 @@ fun DepartScreenDriver(
             item {
                 Card(
                     backgroundColor = cardColor,
-                    elevation = 4.dp,
+                    elevation = 8.dp,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        ActionButton(
-                            text = if (isTracking) "Stop Sending Location" else "Start Sending Location",
-                            icon = if (isTracking) Icons.Default.Stop else Icons.Default.PlayArrow,
-                            color = if (isTracking) Color.Red else green
-                        ) {
-                            if (!checkLocationPermission(context)) {
-                                requestLocationPermission(activity)
-                            } else if (!isTracking) {
-                                locationDriverViewModel.startLocationUpdates()
-                            } else {
-                                locationDriverViewModel.stopLocationUpdates()
-                            }
-
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                                ActivityCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                                ) != PackageManager.PERMISSION_GRANTED
-                            ) {
-                                requestBackgroundLocationPermission(context)
-                            }
-                        }
-
-                        NextStopCard(
-                            stopName = nextStop.first,
-                            peopleWaiting = nextStop.second,
-                            distance = nextStop.third,
-                            backgroundColor = cardColor,
-                            textColor = textColor
+                        Text(
+                            text = "Informasi Halte",
+                            style = MaterialTheme.typography.h5,
+                            color = accentColor,
+                            fontWeight = FontWeight.Bold
                         )
 
-                        ActionButton(
-                            text = "Update Next Stop",
-                            icon = Icons.Default.Refresh,
-                            color = accentColor
-                        ) {
-                            nextStop = getNextStopDummy()
+                        currentHalte?.let { halte ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(accentColor.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                                    .padding(16.dp)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = halte.name.drop(3), // Menghilangkan 4 karakter pertama
+                                        style = MaterialTheme.typography.h6,
+                                        color = textColor,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PeopleAlt,
+                                            contentDescription = "Waiting passengers",
+                                            tint = accentColor,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "${halte.waitingCount} penumpang menunggu",
+                                            style = MaterialTheme.typography.body1,
+                                            color = textColor.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
                         }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { locationDriverViewModel.loadPreviousHalte() },
+                                colors = ButtonDefaults.buttonColors(backgroundColor = accentColor),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Previous stop",
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Previous", color = Color.White)
+                            }
+
+                            Button(
+                                onClick = { locationDriverViewModel.loadNextHalte() },
+                                colors = ButtonDefaults.buttonColors(backgroundColor = accentColor),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Next", color = Color.White)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.ArrowForward,
+                                    contentDescription = "Next stop",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            item {
+                Card(
+                    backgroundColor = if (isTracking) green else Color.Red,
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (isTracking) "Sedang Beroperasi" else "Tidak Beroperasi",
+                                style = MaterialTheme.typography.h6,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (isTracking) "Lokasi sedang dibagikan" else "Lokasi tidak dibagikan",
+                                style = MaterialTheme.typography.body1,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+                        Switch(
+                            checked = isTracking,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    when {
+                                        !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> {
+                                            Toast.makeText(context, "Mohon nyalakan lokasi terlebih dahulu", Toast.LENGTH_LONG).show()
+                                        }
+                                        !checkLocationPermission(context) -> {
+                                            requestLocationPermission(activity)
+                                        }
+                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                                                ActivityCompat.checkSelfPermission(
+                                                    context,
+                                                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                                                ) != PackageManager.PERMISSION_GRANTED -> {
+                                            requestBackgroundLocationPermission(context)
+                                        }
+                                        else -> {
+                                            locationDriverViewModel.startLocationUpdates()
+                                        }
+                                    }
+                                } else {
+                                    locationDriverViewModel.stopLocationUpdates()
+                                }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color.White.copy(alpha = 0.5f),
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color.White.copy(alpha = 0.3f)
+                            )
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -169,92 +285,42 @@ fun DepartScreenDriver(
     }
 }
 
-@Composable
-fun NextStopCard(
-    stopName: String,
-    peopleWaiting: Int,
-    distance: Double,
-    backgroundColor: Color,
-    textColor: Color
-) {
-    Card(
-        backgroundColor = backgroundColor,
-        elevation = 4.dp,
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Next Stop",
-                style = MaterialTheme.typography.h6,
-                color = textColor,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = stopName,
-                style = MaterialTheme.typography.body1,
-                color = textColor
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "People waiting",
-                        tint = textColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "$peopleWaiting waiting",
-                        style = MaterialTheme.typography.body2,
-                        color = textColor
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Distance",
-                        tint = textColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = String.format("%.2f km", distance),
-                        style = MaterialTheme.typography.body2,
-                        color = textColor
-                    )
-                }
-            }
+fun findNearestStop(currentLocation: LatLng): Pair<LatLng, String>? {
+    var nearest: Pair<LatLng, String>? = null
+    var nearestDistance = Double.MAX_VALUE
+
+    for ((position, title) in markerPositions) {
+        val distance = calculateDistance(currentLocation, position)
+        if (distance < nearestDistance) {
+            nearestDistance = distance
+            nearest = Pair(position, title)
         }
     }
+
+    return nearest
 }
 
-// Fungsi dummy untuk mendapatkan halte selanjutnya
-fun getNextStopDummy(): Triple<String, Int, Double> {
-    val stops = listOf(
-        "Halte 1 Campurejo",
-        "Halte 2 RSU Lirboyo",
-        "Halte 3 Kelurahan Sukorame",
-        "Halte 4 RSU Daha Husada",
-        "Halte 5 Mojoroto Indah"
-    )
-    val randomStop = stops[Random.nextInt(stops.size)]
-    val randomPeopleWaiting = Random.nextInt(1, 21) // 1 to 20
-    val randomDistance = Random.nextDouble(0.1, 5.1) // 0.1 to 5.0
-    return Triple(randomStop, randomPeopleWaiting, randomDistance)
+fun calculateDistance(start: LatLng, end: LatLng): Double {
+    val results = FloatArray(1)
+    Location.distanceBetween(start.latitude, start.longitude, end.latitude, end.longitude, results)
+    return results[0].toDouble()
 }
+
 
 @Composable
 fun TutorialSlider(indicatorColor: Color) {
     val pagerState = rememberPagerState()
+    val isDarkTheme = isSystemInDarkTheme()
+    val backgroundColor = if (isDarkTheme) Color(0xFF2C2C2C) else Color(0xFFF0F0F0)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val accentColor = if (isDarkTheme) Color(0xFF6200EE) else Color(0xFF3700B3)
+
     val slides = listOf(
-        "Slide 1: Tekan 'Start Sending Location' untuk mulai mengirim lokasi Anda.",
-        "Slide 2: Tekan 'Navigate to Nearest Stop' untuk navigasi ke perhentian terdekat.",
-        "Slide 3: Pastikan GPS dan izin lokasi diaktifkan untuk pengalaman terbaik."
+        Triple("Mulai Perjalanan", "Aktifkan switch untuk mulai membagikan lokasi Anda.", Icons.Default.PlayArrow),
+        Triple("Informasi Halte", "Lihat informasi halte saat ini, termasuk jumlah penumpang yang menunggu.", Icons.Default.Info),
+        Triple("Navigasi Halte", "Gunakan tombol 'Sebelumnya' dan 'Selanjutnya' untuk melihat informasi halte lainnya.", Icons.Default.Navigation),
+        Triple("Pantau Status", "Perhatikan status 'Sedang Beroperasi' atau 'Tidak Beroperasi' di bagian bawah layar.", Icons.Default.Visibility),
+        Triple("Akhiri Perjalanan", "Non-aktifkan switch untuk berhenti membagikan lokasi dan mengakhiri perjalanan.", Icons.Default.Stop)
     )
 
     Column {
@@ -262,23 +328,45 @@ fun TutorialSlider(indicatorColor: Color) {
             count = slides.size,
             state = pagerState,
             modifier = Modifier
-                .height(200.dp)
+                .height(220.dp)
                 .fillMaxWidth()
         ) { page ->
             Card(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp),
-                elevation = 4.dp
+                    .padding(12.dp),
+                elevation = 4.dp,
+                backgroundColor = backgroundColor,
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Icon(
+                        imageVector = slides[page].third,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .padding(bottom = 8.dp)
+                    )
                     Text(
-                        text = slides[page],
+                        text = slides[page].first,
+                        style = MaterialTheme.typography.h6,
+                        color = accentColor,
+                        fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        text = slides[page].second,
+                        style = MaterialTheme.typography.body2,
+                        color = textColor,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -288,13 +376,15 @@ fun TutorialSlider(indicatorColor: Color) {
             pagerState = pagerState,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(8.dp),
-            activeColor = indicatorColor,
-            inactiveColor = indicatorColor.copy(alpha = 0.3f)
+                .padding(12.dp),
+            activeColor = accentColor,
+            inactiveColor = accentColor.copy(alpha = 0.3f),
+            indicatorWidth = 6.dp,
+            indicatorHeight = 6.dp,
+            spacing = 8.dp
         )
     }
 }
-
 
 @Composable
 fun ActionButton(
@@ -319,23 +409,7 @@ fun ActionButton(
     }
 }
 
-// Helper functions
 
-// Helper function to get the next stop
-fun getNextStop(currentLocation: LatLng): Triple<String, Int, Double>? {
-    val sortedStops = markerPositions.sortedBy { (position, _) ->
-        calculateDistance(currentLocation, position)
-    }
-
-    // Find the first stop that hasn't been passed yet
-    return sortedStops.firstOrNull { (position, _) ->
-        calculateDistance(currentLocation, position) > 0.1 // 100 meters threshold
-    }?.let { (position, title) ->
-        val distance = calculateDistance(currentLocation, position)
-        // Simulate a random number of people waiting (1-20)
-        Triple(title, (1..20).random(), distance)
-    }
-}
 
 fun checkLocationPermission(context: Context): Boolean {
     return ActivityCompat.checkSelfPermission(
@@ -368,51 +442,7 @@ fun requestBackgroundLocationPermission(context: Context) {
     }
 }
 
-fun openDirectionsInGoogleMaps(context: Context, currentLocation: LatLng) {
-    val nearest = findNearestStop(currentLocation)
 
-    nearest?.let { (stopLocation, title) ->
-        val gmmIntentUri = Uri.parse("google.navigation:q=${stopLocation.latitude},${stopLocation.longitude}&mode=d")
-        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
-        mapIntent.setPackage("com.google.android.apps.maps")
-
-        try {
-            context.startActivity(mapIntent)
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(context, "Google Maps app not installed", Toast.LENGTH_SHORT).show()
-        }
-    }
-}
-
-fun findNearestStop(currentLocation: LatLng): Pair<LatLng, String>? {
-    var nearest: Pair<LatLng, String>? = null
-    var nearestDistance = Double.MAX_VALUE
-
-    for ((position, title) in markerPositions) {
-        val distance = calculateDistance(currentLocation, position)
-        if (distance < nearestDistance) {
-            nearestDistance = distance
-            nearest = Pair(position, title)
-        }
-    }
-
-    return nearest
-}
-
-fun calculateDistance(latLng1: LatLng, latLng2: LatLng): Double {
-    val earthRadius = 6371.0
-
-    val dLat = Math.toRadians(latLng2.latitude - latLng1.latitude)
-    val dLng = Math.toRadians(latLng2.longitude - latLng1.longitude)
-
-    val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(Math.toRadians(latLng1.latitude)) * Math.cos(Math.toRadians(latLng2.latitude)) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2)
-
-    val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-
-    return earthRadius * c
-}
 
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1
 private const val BACKGROUND_LOCATION_PERMISSION_CODE = 2

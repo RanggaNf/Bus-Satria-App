@@ -1,6 +1,7 @@
 package com.bussatriaappdriver.ui.screens
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -39,6 +40,7 @@ import com.bussatriaappdriver.ui.theme.lightTextPrimary
 import com.bussatriaappdriver.ui.theme.onSurface
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import android.content.res.Configuration
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -48,6 +50,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Card
 import androidx.compose.runtime.*
@@ -105,7 +108,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.bussatriaappdriver.ui.theme.abuMuda
 import com.bussatriaappdriver.ui.theme.abuTua
 import com.bussatriaappdriver.ui.theme.surface
-
 @Composable
 fun ProfileScreenDriver(
     navController: NavController,
@@ -157,101 +159,116 @@ fun ProfileScreenDriver(
                     .statusBarsPadding() // Ensures padding respects status bar
             )
 
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
+                item { Spacer(modifier = Modifier.height(16.dp)) }
 
-                Box(
-                    modifier = Modifier.size(150.dp)
-                ) {
+                item {
                     Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, iconColor, CircleShape)
+                        modifier = Modifier.size(150.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.PermIdentity,
-                            contentDescription = null,
+                        Box(
                             modifier = Modifier
-                                .size(64.dp)
-                                .align(Alignment.Center),
-                            tint = iconColor
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .align(Alignment.BottomEnd)
-                            .clip(CircleShape)
-                            .background(buttonColor)
-                            .border(2.dp, backgroundColor, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "Change profile picture",
-                            tint = backgroundColor,
+                                .size(150.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, iconColor, CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PermIdentity,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .align(Alignment.Center),
+                                tint = iconColor
+                            )
+                        }
+                        Box(
                             modifier = Modifier
-                                .size(30.dp)
-                                .align(Alignment.Center)
-                        )
+                                .size(50.dp)
+                                .align(Alignment.BottomEnd)
+                                .clip(CircleShape)
+                                .background(buttonColor)
+                                .border(2.dp, backgroundColor, CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CameraAlt,
+                                contentDescription = "Change profile picture",
+                                tint = backgroundColor,
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .align(Alignment.Center)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(50.dp))
+                item { Spacer(modifier = Modifier.height(50.dp)) }
 
-                ProfileInfoSectionDriver("Bus", "Bus 1", Icons.Default.DirectionsBus, textColor, iconColor)
-                ProfileInfoSectionDriver("Plat Nomor", "AB 12345 AN", Icons.Default.Numbers, textColor, iconColor)
-                ProfileInfoSectionDriver("Nama Driver", "mohammad.rangga.n.f@gmail.com", Icons.Default.Person, textColor, iconColor)
+                item {
+                    ProfileInfoSectionDriver("Bus", "Bus 1", Icons.Default.DirectionsBus, textColor, iconColor)
+                    ProfileInfoSectionDriver("Plat Nomor", "AB 12345 AN", Icons.Default.Numbers, textColor, iconColor)
+                    ProfileInfoSectionDriver("Nama Driver", "Rangga Faizin", Icons.Default.Person, textColor, iconColor)
+                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                item { Spacer(modifier = Modifier.height(16.dp)) }
 
-                Card(
-                    backgroundColor = cardColor,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        ProfileOptionItemDriver("Edit Profil", Icons.Default.Edit, text2Color, iconColor, onClick = {
-                            // Handle Edit Profile Click
-                        })
-                        ProfileOptionItemDriver("Butuh Bantuan", Icons.Default.HelpCenter, text2Color, iconColor, onClick = {
-                            // Handle Report List Click
-                        })
+                item {
+                    Card(
+                        backgroundColor = cardColor,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            ProfileOptionItemDriver(
+                                title = "Butuh Bantuan",
+                                icon = Icons.Default.HelpCenter,
+                                textColor = text2Color,
+                                iconColor = iconColor,
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                                        data = Uri.parse("https://wa.me/6283852347479")
+                                    }
+                                    context.startActivity(intent)
+                                }
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
 
-                Button(
-                    onClick = {
-                        showLogoutDialog = true
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                        .pressClickEffect(),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = buttonColor),
-                    shape = RoundedCornerShape(percent = 20),
-                    elevation = ButtonDefaults.elevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 4.dp
-                    ),
-                    contentPadding = PaddingValues(8.dp)
-                ) {
-                    Text(
-                        text = "Logout",
-                        color = backgroundColor,
-                        style = TextStyle(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp
+                item { Spacer(modifier = Modifier.height(32.dp)) }
+
+                item {
+                    Button(
+                        onClick = {
+                            showLogoutDialog = true
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .pressClickEffect(),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = buttonColor),
+                        shape = RoundedCornerShape(percent = 20),
+                        elevation = ButtonDefaults.elevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 4.dp
+                        ),
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
+                        Text(
+                            text = "Logout",
+                            color = backgroundColor,
+                            style = TextStyle(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

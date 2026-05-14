@@ -45,6 +45,6 @@ val redOrange = Color(0xFFe84a23)
 val green = Color(0xFF43A047)
 val blue = Color(0xFF3A35D6)
 val brightBlue = Color(0xFF409BF5)
-
+val bluewa = Color(0xFF3949AB)
 val darkShapePrimary = Color(0xFF123013)
 val lightShapePrimary = Color(0xFFCBD5CC)

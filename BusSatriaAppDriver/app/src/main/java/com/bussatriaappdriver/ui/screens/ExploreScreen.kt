@@ -72,6 +72,7 @@ fun ExploreScreen(
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val buttonColor = if (isDarkTheme) DarkPrimaryPurple else LightPrimaryPurple
     val markerColor = if (isDarkTheme) abuMuda else abuTua
+    val halteInfo by viewModel.halteInfo.collectAsState()
 
     Box(
         modifier = modifier
@@ -103,16 +104,17 @@ fun GoogleMapView(
         position = CameraPosition.fromLatLngZoom(initialPosition, 14f)
     }
 
-    val busLocationIcon =  vectorToBitmap(context, R.drawable.busmerah)
+    val busLocationIcon = vectorToBitmap(context, R.drawable.busmerah)
     val markerIcon = vectorToBitmap(context, R.drawable.halte)
     val arrowIcon = vectorToBitmapDescriptor(context, R.drawable.arrow, if (isDarkTheme) white else gray)
     val nightModeStyle = context.resources.openRawResource(R.raw.map_style_night).bufferedReader().use { it.readText() }
     val lightModeStyle = context.resources.openRawResource(R.raw.map_style_light).bufferedReader().use { it.readText() }
     val mapStyleOptions = if (isDarkTheme) MapStyleOptions(nightModeStyle) else MapStyleOptions(lightModeStyle)
-
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
-
+    val busLocations by viewModel.busLocations.collectAsState()
+    val halteInfo by viewModel.halteInfo.collectAsState()
     val polylineColor = if (isDarkTheme) brightBlue else blue
+
 
     fun checkLocationPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(
@@ -135,23 +137,21 @@ fun GoogleMapView(
 
     Box(modifier = modifier) {
         GoogleMap(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapStyleOptions = mapStyleOptions)
         ) {
-            busStops.forEach { busStop ->
-                val position = markerPositions.find { it.second == busStop.name }?.first
-                position?.let {
-                    markerIcon?.let { icon ->
-                        Marker(
-                            state = MarkerState(position = it),
-                            title = busStop.name,
-                            snippet = busStop.address,
-                            icon = icon,
-                            zIndex = 0f
-                        )
-                    }
+            // Render bus stops
+            markerPositions.forEach { (position, name) ->
+                markerIcon?.let { icon ->
+                    val waitingCount = halteInfo[name] ?: 0
+                    Marker(
+                        state = MarkerState(position = position),
+                        title = name,
+                        snippet = "Penumpang menunggu: $waitingCount",
+                        icon = icon,
+                        zIndex = 1f
+                    )
                 }
             }
 
@@ -190,22 +190,23 @@ fun GoogleMapView(
                 }
             }
 
-            // Tambahkan marker untuk lokasi bus yang didapatkan dari viewModel
-            viewModel.busLocations.collectAsState().value.forEach { busLocation ->
+            // Render bus locations
+            busLocations.forEach { busLocation ->
                 Marker(
                     state = MarkerState(position = busLocation.position),
                     title = busLocation.id,
                     icon = busLocationIcon,
-                    zIndex = 1f // Pastikan zIndex lebih tinggi dari ikon lainnya
+                    zIndex = 2f
                 )
             }
 
+            // Render current location
             currentLocation?.let {
                 Marker(
                     state = MarkerState(position = it),
                     title = "Lokasi Kamu",
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
-                    zIndex = 0f
+                    zIndex = 3f
                 )
             }
         }

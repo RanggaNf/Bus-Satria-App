@@ -53,6 +53,8 @@ googleGmsGoogleServices = "4.4.2"
 firebaseFirestoreKtx = "25.0.0"
 playServicesLocation = "21.3.0"
 firebaseStorageKtx = "21.0.0"
+datastoreCoreAndroid = "1.1.1"
+cameraCore = "1.4.0"
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPagerIndicators" }
@@ -122,6 +124,8 @@ ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
+androidx-datastore-core-android = { group = "androidx.datastore", name = "datastore-core-android", version.ref = "datastoreCoreAndroid" }
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

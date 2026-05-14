@@ -53,7 +53,7 @@ fun StartScreen(
     val imageList = listOf(
         R.drawable.kediri1,
         R.drawable.kediri2,
-        R.drawable.exostart
+        R.drawable.kediri3
     )
 
     val pagerState = rememberPagerState(pageCount = { imageList.size })

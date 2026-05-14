@@ -1,196 +1,248 @@
 package com.bussatriaappdriver.ui.screens
 
-import com.bussatriaappdriver.ui.viewmodel.ChatViewModel
+import android.Manifest
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
-import com.bussatriaappdriver.data.model.ChatMessage
-import java.text.SimpleDateFormat
-import java.util.*
-import android.content.res.Configuration
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.icons.filled.*
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.bussatriaappdriver.ui.theme.*
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import coil.compose.rememberImagePainter
+import com.bussatriaappdriver.data.model.ChatMessage
+import com.bussatriaappdriver.ui.theme.bluewa
+import com.bussatriaappdriver.ui.viewmodel.AuthViewModel
+import com.bussatriaappdriver.ui.viewmodel.ChatViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.firebase.auth.FirebaseAuth
+import java.text.SimpleDateFormat
+import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
-    navController: NavController,
     viewModel: ChatViewModel = hiltViewModel(),
-    currentUserId: String,
-    currentUserName: String
+    authViewModel: AuthViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val messages by viewModel.messages.collectAsState()
-    val (inputText, setInputText) = remember { mutableStateOf("") }
-    val context = LocalContext.current
+    val scrollState = rememberLazyListState()
+    var messageText by remember { mutableStateOf("") }
+    val storagePermissionState = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE)
 
-    val systemUiController = rememberSystemUiController()
     val isDarkTheme = isSystemInDarkTheme()
-    val backgroundColor = if (isDarkTheme) Color.Black else Color.White
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-    val buttonColor = if (isDarkTheme) DarkPrimaryPurple else LightPrimaryPurple
-    val iconColor = if (isDarkTheme) abuMuda else abuTua
+    val backgroundColor = if (isDarkTheme) Color(0xFF121B22) else Color(0xFFECE5DD)
 
-    systemUiController.setSystemBarsColor(color = backgroundColor)
+    LaunchedEffect(Unit) {
+        authViewModel
+    }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
             .navigationBarsPadding()
     ) {
-        TopAppBar(
-            title = {
-                Text(
-                    text = "Chat",
-                    color = textColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = textColor
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = backgroundColor)
-        )
+        Column {
+            ChatTopBar(navController)
 
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            reverseLayout = true  // To show newest messages at the bottom
-        ) {
-            items(messages) { message ->
-                ChatMessageItem(message, currentUserId, textColor, buttonColor)
+            LazyColumn(
+                state = scrollState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                reverseLayout = true
+            ) {
+                var previousDate: String? = null
+                items(messages.reversed()) { message ->
+                    val currentDate = getDateLabel(message.timestamp)
+                    if (currentDate != previousDate) {
+                        DateSeparator(date = currentDate, isDarkTheme = isDarkTheme)
+                        previousDate = currentDate
+                    }
+                    ChatMessageItem(message, isDarkTheme)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
+
+            // Spacer to push content up
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
-        Row(
+        // Menampilkan pesan bahwa driver hanya dapat melihat pesan
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Black.copy(alpha = 0.6f))
         ) {
-            IconButton(onClick = {
-                // Implement image picker logic here
-            }) {
-                Icon(
-                    Icons.Default.Image,
-                    contentDescription = "Send Image",
-                    tint = iconColor
-                )
-            }
-
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = setInputText,
-                modifier = Modifier.weight(1f),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = buttonColor,
-                    unfocusedBorderColor = iconColor
-                ),
-                textStyle = TextStyle(color = textColor)
+            Text(
+                text = "Driver hanya dapat melihat pesan",
+                modifier = Modifier
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
             )
-
-            IconButton(onClick = {
-                if (inputText.isNotBlank()) {
-                    viewModel.sendMessage(inputText, currentUserId, currentUserName)
-                    setInputText("")
-                }
-            }) {
-                Icon(
-                    Icons.Default.Send,
-                    contentDescription = "Send",
-                    tint = buttonColor
-                )
-            }
         }
+    }
+
+    LaunchedEffect(messages) {
+        scrollState.animateScrollToItem(0)
+    }
+}
+
+fun getDateLabel(timestamp: Date): String {
+    val calendar = Calendar.getInstance()
+    val today = calendar.apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.time
+    calendar.add(Calendar.DAY_OF_YEAR, -1)
+    val yesterday = calendar.time
+
+    return when {
+        timestamp >= today -> "Hari ini"
+        timestamp >= yesterday -> "Kemarin"
+        else -> SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(timestamp)
     }
 }
 
 @Composable
-fun ChatMessageItem(message: ChatMessage, currentUserId: String, textColor: Color, bubbleColor: Color) {
-    val isCurrentUser = message.senderId == currentUserId
-    val alignment = if (isCurrentUser) Alignment.End else Alignment.Start
+fun DateSeparator(date: String, isDarkTheme: Boolean) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = date,
+            color = if (isDarkTheme) Color.LightGray else Color.DarkGray,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .background(
+                    color = if (isDarkTheme) Color(0xFF121B22) else Color(0xFFECE5DD),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .align(Alignment.Center)
+        )
+    }
+}
+@Composable
+fun ChatTopBar(
+    navController: NavController
+) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val backgroundColor = if (isDarkTheme) Color.Black else bluewa
+    val textColor = Color.White
+
+    TopAppBar(
+        title = { Text(text = "Obrolan", color = textColor) },
+        navigationIcon = {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = textColor
+                )
+            }
+        },
+        backgroundColor = backgroundColor,
+        elevation = 4.dp,
+        modifier = Modifier.statusBarsPadding()
+    )
+}
+
+@Composable
+fun ChatMessageItem(
+    message: ChatMessage,
+    isDarkTheme: Boolean,
+) {
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val isCurrentUser = message.senderId == currentUser?.uid
+    val bubbleColor = if (isCurrentUser) Color(0xFF25D366) else Color.White
+    val textColor = if (isCurrentUser) Color.White else Color.Black
+    val horizontalAlignment = if (isCurrentUser) Alignment.End else Alignment.Start
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        horizontalAlignment = alignment
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalAlignment = horizontalAlignment
     ) {
-        Text(
-            text = message.senderName,
-            style = MaterialTheme.typography.bodySmall,
-            color = textColor,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
+        if (!isCurrentUser) {
+            Text(
+                text = message.senderName,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+            )
+        }
 
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = bubbleColor
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            when (message.type) {
-                "text" -> Text(
-                    text = message.content,
-                    modifier = Modifier.padding(8.dp),
-                    color = Color.White
-                )
-                "image" -> AsyncImage(
-                    model = message.imageUrl,
-                    contentDescription = "Chat Image",
-                    modifier = Modifier.size(200.dp)
-                )
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 260.dp)
+                    .background(
+                        color = bubbleColor,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                if (message.type == "image") {
+                    Image(
+                        painter = rememberImagePainter(message.imageUrl),
+                        contentDescription = "Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                    )
+                } else {
+                    Text(
+                        text = message.content,
+                        color = textColor,
+                        fontSize = 16.sp
+                    )
+                }
             }
         }
 
+        Spacer(modifier = Modifier.height(2.dp))
+
         Text(
-            text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(message.timestamp),
-            style = MaterialTheme.typography.bodySmall,
-            color = textColor,
-            modifier = Modifier.padding(top = 4.dp)
+            text = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(message.timestamp),
+            fontSize = 11.sp,
+            color = Color.Gray,
+            modifier = Modifier.padding(start = if (isCurrentUser) 0.dp else 4.dp)
         )
     }
 }
-
-//@Preview(name = "Light Mode", uiMode = Configuration.UI_MODE_NIGHT_NO)
-//@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
-//@Composable
-//fun ChatScreenPreview() {
-//    val navController = rememberNavController()
-//    val viewModel = hiltViewModel<ChatViewModel>()
-//    ChatScreen(
-//        navController = navController,
-//        viewModel = viewModel,
-//        currentUserId = "user1",
-//        currentUserName = "John Doe"
-//    )
-//}

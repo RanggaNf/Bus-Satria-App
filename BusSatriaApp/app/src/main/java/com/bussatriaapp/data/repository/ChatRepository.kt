@@ -38,13 +38,13 @@ class ChatRepository @Inject constructor(
         awaitClose { listenerRegistration.remove() }
     }
 
-    suspend fun sendMessage(content: String, type: String = "text", imageUrl: String? = null) {
+    suspend fun sendMessage(content: String, senderName: String, type: String = "text", imageUrl: String? = null) {
         val currentUser = auth.currentUser
         if (currentUser != null) {
             val message = ChatMessage(
                 id = UUID.randomUUID().toString(),
                 senderId = currentUser.uid,
-                senderName = currentUser.displayName ?: "Anonymous",
+                senderName = senderName,
                 content = content,
                 timestamp = Date(),
                 imageUrl = imageUrl,
@@ -54,13 +54,12 @@ class ChatRepository @Inject constructor(
                 messagesCollection.document(message.id).set(message).await()
             } catch (e: FirebaseFirestoreException) {
                 Log.e("ChatRepository", "Error sending message", e)
-                // Handle the exception appropriately
             }
         } else {
             Log.e("ChatRepository", "User is not authenticated")
-            // Handle unauthenticated state appropriately
         }
     }
+
 
     suspend fun sendImage(imageUri: Uri): String {
         val storageRef = storage.reference.child("chat_images/${UUID.randomUUID()}")
@@ -69,4 +68,13 @@ class ChatRepository @Inject constructor(
         sendMessage("Image", "image", imageUrl)
         return imageUrl
     }
+    suspend fun deleteMessage(message: ChatMessage) {
+        firestore.collection("messages").document(message.id).delete().await()
+    }
+    suspend fun uploadImageToStorage(imageUri: Uri): String {
+        val storageRef = storage.reference.child("chat_images/${UUID.randomUUID()}")
+        val uploadTask = storageRef.putFile(imageUri).await()
+        return uploadTask.storage.downloadUrl.await().toString()
+    }
+
 }

@@ -68,5 +68,6 @@ class DriverAuthRepository @Inject constructor(
     companion object {
         private const val TAG = "DriverAuthRepository"
     }
+
 }
 

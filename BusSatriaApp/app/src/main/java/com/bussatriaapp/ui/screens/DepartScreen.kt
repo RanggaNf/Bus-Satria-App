@@ -8,12 +8,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -70,21 +72,37 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import com.bussatriaapp.data.HalteStop
+import com.bussatriaapp.data.halteStops
 import com.bussatriaapp.ui.theme.green
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.TextField
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.toSize
+import java.util.Calendar
 import kotlin.random.Random
 
 @Composable
@@ -109,12 +127,34 @@ fun DepartScreen(
     val context = LocalContext.current
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
     val activity = context as? ComponentActivity
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var selectedHalteStop by remember { mutableStateOf<HalteStop?>(null) }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
+    var textFieldSize by remember { mutableStateOf(Size.Zero) }
+    var isSearchingNearestStop by remember { mutableStateOf(false) }
+    val dropdownBackgroundColor = if (isDarkTheme) Color(0xFF2C2C2C) else Color.White
+    val dropdownTextColor = if (isDarkTheme) Color.White else Color.Black
+    val icon = if (isDropdownExpanded)
+        Icons.Filled.ArrowDropUp
+    else
+        Icons.Filled.ArrowDropDown
+
+
+    LaunchedEffect(isTracking) {
+        locationViewModel.checkAndUpdateTrackingState()
+    }
 
     LaunchedEffect(key1 = true) {
         systemUiController.setSystemBarsColor(
             color = backgroundColor,
             darkIcons = !isDarkTheme
         )
+    }
+    LaunchedEffect(Unit) {
+        Log.d("DepartScreen", "Halte stops count: ${halteStops.size}")
+        halteStops.forEach {
+            Log.d("DepartScreen", "Halte: ${it.name}")
+        }
     }
 
     Box(
@@ -140,39 +180,24 @@ fun DepartScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
                     Column(
-                        modifier = Modifier
+                        modifier = modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            .padding(16.dp)
                     ) {
-                        ActionButton(
-                            text = if (isTracking) "Stop Sending Location" else "Start Sending Location",
-                            icon = if (isTracking) Icons.Default.Stop else Icons.Default.PlayArrow,
-                            color = if (isTracking) Color.Red else green
-                        ) {
-                            if (!checkLocationPermission(context)) {
-                                requestLocationPermission(activity)
-                            } else if (!isTracking) {
-                                locationViewModel.startLocationUpdates()
-                            } else {
-                                locationViewModel.stopLocationUpdates()
-                            }
-
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                                ActivityCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                                ) != PackageManager.PERMISSION_GRANTED
-                            ) {
-                                requestBackgroundLocationPermission(context)
-                            }
-                        }
+                        Text(
+                            text = "Cari Halte Terdekat",
+                            style = MaterialTheme.typography.h6.copy(color = textColor),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
 
                         ActionButton(
-                            text = "Navigate to Nearest Stop",
-                            icon = Icons.Default.Navigation,
-                            color = accentColor
+                            text = "Cari halte terdekat",
+                            icon = Icons.Default.Search,
+                            color = accentColor,
+                            enabled = !isSearchingNearestStop,
+                            textColor = if (isDarkTheme) Color.White else Color.Black
                         ) {
+                            isSearchingNearestStop = true
                             if (!checkLocationPermission(context)) {
                                 requestLocationPermission(activity)
                             } else {
@@ -180,27 +205,148 @@ fun DepartScreen(
                                     location?.let {
                                         val latLng = LatLng(it.latitude, it.longitude)
                                         currentLocation = latLng
-                                        openDirectionsInGoogleMaps(context, latLng)
+                                        nearestStop = findNearestStop(latLng)
+                                        isSearchingNearestStop = false
                                     }
                                 }
                             }
                         }
 
-                        NextStopCard(
-                            stopName = nextStop.first,
-                            peopleWaiting = nextStop.second,
-                            distance = nextStop.third,
-                            backgroundColor = cardColor,
-                            textColor = textColor
+                        if (isSearchingNearestStop) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        }
+
+                        nearestStop?.let { (_, name) ->
+                            Text(
+                                text = "Halte terdekat: $name",
+                                style = MaterialTheme.typography.body1,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+
+                            ActionButton(
+                                text = "Pergi ke halte terdekat",
+                                icon = Icons.Default.Navigation,
+                                color = accentColor,
+                                textColor = if (isDarkTheme) Color.White else Color.Black
+                            ) {
+                                currentLocation?.let { location ->
+                                    openDirectionsInGoogleMaps(context, location)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // 2. Pemilihan halte dan pengiriman notifikasi
+                        Text(
+                            text = "Pilih Halte dan Kirim Notifikasi",
+                            style = MaterialTheme.typography.h6.copy(color = textColor),
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
-                        ActionButton(
-                            text = "Update Next Stop",
-                            icon = Icons.Default.Refresh,
-                            color = accentColor
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isDropdownExpanded = true }
+                                .border(
+                                    width = 1.dp,
+                                    color = textColor.copy(alpha = 0.5f),
+                                    shape = MaterialTheme.shapes.small
+                                )
+                                .background(cardColor)
+                                .padding(16.dp)
                         ) {
-                            nextStop = getNextStopDummy()
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = selectedHalteStop?.name?.drop(3) ?: "Pilih Halte Tunggu",
+                                    style = MaterialTheme.typography.body1.copy(color = textColor)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Dropdown Arrow",
+                                    tint = textColor
+                                )
+                            }
                         }
+
+                        DropdownMenu(
+                            expanded = isDropdownExpanded,
+                            onDismissRequest = { isDropdownExpanded = false },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(dropdownBackgroundColor)
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            halteStops.forEach { halteStop ->
+                                DropdownMenuItem(
+                                    onClick = {
+                                        selectedHalteStop = halteStop
+                                        isDropdownExpanded = false
+                                    }
+                                ) {
+                                    Text(
+                                        text = halteStop.name.drop(3),
+                                        color = dropdownTextColor
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        ActionButton(
+                            text = if (isTracking) "Sudah di dalam bus" else "Kirim notifikasi ke driver",
+                            icon = Icons.Default.Send,
+                            color = if (isTracking) Color.Red else green,
+                            enabled = selectedHalteStop != null || isTracking,
+                            textColor = if (isDarkTheme) Color.White else Color.Black,
+                            onClick = {
+                                if (!isTracking) {
+                                    val currentSelectedHalteStop = selectedHalteStop
+                                    if (currentSelectedHalteStop != null) {
+                                        if (!checkLocationPermission(context)) {
+                                            requestLocationPermission(activity)
+                                        } else {
+                                            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                                            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                                                locationViewModel.sendLocationToDriver(currentSelectedHalteStop)
+                                                Toast.makeText(context, "Notifikasi berhasil dikirim ke driver dan notifikasi menunggu telah dikirim", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, "Periksa dan pastikan lokasi Anda telah dinyalakan", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "Silakan pilih halte terlebih dahulu", Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    showConfirmDialog = true
+                                }
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                                    ActivityCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                                    ) != PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    requestBackgroundLocationPermission(context)
+                                }
+                            }
+                        )
+
+                        ConfirmationDialog(
+                            showDialog = showConfirmDialog,
+                            onConfirm = {
+                                locationViewModel.passengerOnBus()
+                                Toast.makeText(context, "Anda telah ditandai berada di dalam bus, jumlah penumpang ditambahkan, dan lokasi dihapus", Toast.LENGTH_SHORT).show()
+                                showConfirmDialog = false
+                            },
+                            onDismiss = { showConfirmDialog = false }
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -208,14 +354,47 @@ fun DepartScreen(
         }
     }
 }
-
+@Composable
+fun ConfirmationDialog(
+    showDialog: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Konfirmasi") },
+            text = { Text("Apakah Anda yakin sudah berada di dalam bus?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onConfirm()
+                    onDismiss()
+                }) {
+                    Text("Ya")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("Tidak")
+                }
+            }
+        )
+    }
+}
 @Composable
 fun TutorialSlider(indicatorColor: Color) {
     val pagerState = rememberPagerState()
+    val isDarkTheme = isSystemInDarkTheme()
+    val backgroundColor = if (isDarkTheme) Color(0xFF2C2C2C) else Color(0xFFF0F0F0)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val accentColor = if (isDarkTheme) Color(0xFF6200EE) else Color(0xFF3700B3)
+
     val slides = listOf(
-        "Slide 1: Tekan 'Start Sending Location' untuk memberitahu driver.",
-        "Slide 2: Tekan 'Navigate to Nearest Stop' untuk navigasi ke perhentian terdekat.",
-        "Slide 3: Pastikan GPS dan izin lokasi diaktifkan untuk pengalaman terbaik."
+        Triple("Cari Halte Terdekat", "Gunakan fitur 'Cari halte terdekat' untuk menemukan perhentian bus terdekat dari lokasi Anda.", Icons.Default.Search),
+        Triple("Pilih Halte", "Pilih halte tempat Anda menunggu dari daftar yang tersedia untuk memberi tahu driver.", Icons.Default.Place),
+        Triple("Kirim Notifikasi", "Tekan 'Kirim notifikasi ke driver' untuk memberitahu posisi Anda dan memulai perjalanan.", Icons.Default.Send),
+        Triple("Konfirmasi Naik Bus", "Setelah naik bus, tekan 'Sudah di dalam bus' untuk mengonfirmasi keberadaan Anda.", Icons.Default.DirectionsBus),
+        Triple("Navigasi ke Halte", "Gunakan 'Pergi ke halte terdekat' untuk mendapatkan petunjuk arah ke perhentian terdekat.", Icons.Default.Navigation)
     )
 
     Column {
@@ -223,23 +402,45 @@ fun TutorialSlider(indicatorColor: Color) {
             count = slides.size,
             state = pagerState,
             modifier = Modifier
-                .height(200.dp)
+                .height(250.dp)
                 .fillMaxWidth()
         ) { page ->
             Card(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp),
-                elevation = 4.dp
+                    .padding(16.dp),
+                elevation = 8.dp,
+                backgroundColor = backgroundColor,
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Icon(
+                        imageVector = slides[page].third,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .padding(bottom = 16.dp)
+                    )
                     Text(
-                        text = slides[page],
+                        text = slides[page].first,
+                        style = MaterialTheme.typography.h6,
+                        color = accentColor,
+                        fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = slides[page].second,
+                        style = MaterialTheme.typography.body2,
+                        color = textColor,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -249,97 +450,38 @@ fun TutorialSlider(indicatorColor: Color) {
             pagerState = pagerState,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(8.dp),
-            activeColor = indicatorColor,
-            inactiveColor = indicatorColor.copy(alpha = 0.3f)
+                .padding(16.dp),
+            activeColor = accentColor,
+            inactiveColor = accentColor.copy(alpha = 0.3f),
+            indicatorWidth = 8.dp,
+            indicatorHeight = 8.dp,
+            spacing = 12.dp
         )
     }
 }
-
-@Composable
-fun NextStopCard(
-    stopName: String,
-    peopleWaiting: Int,
-    distance: Double,
-    backgroundColor: Color,
-    textColor: Color
-) {
-    Card(
-        backgroundColor = backgroundColor,
-        elevation = 4.dp,
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Next Stop",
-                style = MaterialTheme.typography.h6,
-                color = textColor,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = stopName,
-                style = MaterialTheme.typography.body1,
-                color = textColor
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "People waiting",
-                        tint = textColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "$peopleWaiting waiting",
-                        style = MaterialTheme.typography.body2,
-                        color = textColor
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Distance",
-                        tint = textColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = String.format("%.2f km", distance),
-                        style = MaterialTheme.typography.body2,
-                        color = textColor
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 fun ActionButton(
     text: String,
     icon: ImageVector,
     color: Color,
+    textColor: Color,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(backgroundColor = color),
-        shape = RoundedCornerShape(8.dp),
+        enabled = enabled,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(imageVector = icon, contentDescription = null, tint = Color.White)
-            Text(text = text, color = Color.White)
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = text, color = Color.White)
     }
 }
 
@@ -412,12 +554,6 @@ fun calculateDistance(start: LatLng, end: LatLng): Double {
     Location.distanceBetween(start.latitude, start.longitude, end.latitude, end.longitude, results)
     return results[0].toDouble()
 }
-
-fun getNextStopDummy(): Triple<String, Int, Double> {
-    // Replace this with real data fetching logic
-    return Triple("Halte 2 Taman Siswa", 15, 1.2)
-}
-
 
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1
 private const val BACKGROUND_LOCATION_PERMISSION_CODE = 2

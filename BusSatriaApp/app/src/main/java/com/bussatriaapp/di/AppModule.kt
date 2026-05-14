@@ -1,8 +1,11 @@
 package com.bussatriaapp.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.bussatriaapp.data.repository.BusLocationRepository
 import com.bussatriaapp.data.repository.LocationRepository
+import com.bussatriaapp.data.repository.SettingsRepository
+import com.bussatriaapp.data.repository.SettingsRepositoryImpl
 import com.bussatriaapp.ui.viewmodel.BusLocationViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -26,13 +29,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseDatabase(): FirebaseDatabase = FirebaseDatabase.getInstance()
-
-    @Provides
-    @Singleton
     fun provideFusedLocationProviderClient(@ApplicationContext context: Context): FusedLocationProviderClient {
         return LocationServices.getFusedLocationProviderClient(context)
     }
+
     @Provides
     @Singleton
     fun provideBusLocationRepository(): BusLocationRepository {
@@ -49,9 +49,9 @@ object AppModule {
     @Singleton
     fun provideLocationRepository(
         fusedLocationClient: FusedLocationProviderClient,
-        firebaseDatabase: FirebaseDatabase
+        firestore: FirebaseFirestore
     ): LocationRepository {
-        return LocationRepository(fusedLocationClient, firebaseDatabase)
+        return LocationRepository(fusedLocationClient, firestore)
     }
 
     @Provides
@@ -61,4 +61,17 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFirebaseStorage(): FirebaseStorage = FirebaseStorage.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
+    }
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(
+        @ApplicationContext context: Context
+    ): SettingsRepository {
+        return SettingsRepositoryImpl(context)
+    }
 }
